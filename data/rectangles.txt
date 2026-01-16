@@ -1,6 +1,5 @@
-# x1 y1 x2 y2
 0 0 10 5
 2 3 6 10
-1 1 1 1 # invalid: zero area
-2 a 5 6 # invalid: non-number
-4 4 10 # invalid: too few values
+1 1 1 1 
+2 a 5 6 
+4 4 10 

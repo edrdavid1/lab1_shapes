@@ -2,6 +2,7 @@ import { ShapeFactory } from "./ShapeFactory.js";
 import { Rectangle } from "../entities/Rectangle.js";
 import { Point } from "../entities/Point.js";
 import { InvalidDataError } from "../exceptions/InvalidDataError.js";
+import { WarehouseObserver } from "../patterns/WarehouseObserver.js";
 
 export class RectangleFactory extends ShapeFactory {
   createShape(data: string[]): Rectangle {
@@ -11,6 +12,13 @@ export class RectangleFactory extends ShapeFactory {
     const [x1, y1, x2, y2] = nums;
     const topLeft = new Point(x1, y1);
     const bottomRight = new Point(x2, y2);
-    return new Rectangle('rect_' + Date.now(), topLeft, bottomRight);
+    const rectangle = new Rectangle('rect_' + Date.now(), topLeft, bottomRight);
+    
+    // Добавить observer для отслеживания изменений
+    const observer = new WarehouseObserver();
+    rectangle.addObserver(observer);
+    observer.update(rectangle);
+    
+    return rectangle;
   }
 }

@@ -6,7 +6,10 @@ import { logger } from "../utils/logger.js";
 import { WHITESPACE_RE } from "../constants.js";
 
 export class ConeService {
-  static surfaceArea(cone: Cone): number {
+  static surfaceArea(cone: Cone | any): number {
+    if (cone instanceof Cone) {
+      return cone.getSurfaceArea();
+    }
     ConeValidator.validateGeometry(cone);
     const slant = Math.sqrt(cone.radius ** 2 + cone.height ** 2);
     const area = Math.PI * cone.radius * (cone.radius + slant);
@@ -14,14 +17,17 @@ export class ConeService {
     return area;
   }
 
-  static volume(cone: Cone): number {
+  static volume(cone: Cone | any): number {
+    if (cone instanceof Cone) {
+      return cone.getVolume();
+    }
     ConeValidator.validateGeometry(cone);
     const vol = (1 / 3) * Math.PI * cone.radius ** 2 * cone.height;
     ConeValidator.validateResults(1, vol);
     return vol;
   }
 
-  static isCone(cone: Cone): boolean {
+  static isCone(cone: Cone | any): boolean {
     try {
       ConeValidator.validateGeometry(cone);
       return true;

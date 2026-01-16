@@ -6,23 +6,32 @@ import { logger } from "../utils/logger.js";
 import { WHITESPACE_RE } from "../constants.js";
 
 export class RectangleService {
-  static area(rect: Rectangle): number {
+  static area(rect: Rectangle | any): number {
+    if (rect instanceof Rectangle) {
+      return rect.getArea();
+    }
     const width = Math.abs(rect.bottomRight.x - rect.topLeft.x);
     const height = Math.abs(rect.bottomRight.y - rect.topLeft.y);
     const area = width * height;
-    RectangleValidator.validateResults(area, 1); // perimeter dummy just to ensure positive
+    RectangleValidator.validateResults(area, 1);
     return area;
   }
 
-  static perimeter(rect: Rectangle): number {
+  static perimeter(rect: Rectangle | any): number {
+    if (rect instanceof Rectangle) {
+      return rect.getPerimeter();
+    }
     const width = Math.abs(rect.bottomRight.x - rect.topLeft.x);
     const height = Math.abs(rect.bottomRight.y - rect.topLeft.y);
     const per = 2 * (width + height);
-    RectangleValidator.validateResults(1, per); // area dummy just to ensure positive
+    RectangleValidator.validateResults(1, per);
     return per;
   }
 
-  static isSquare(rect: Rectangle): boolean {
+  static isSquare(rect: Rectangle | any): boolean {
+    if (rect instanceof Rectangle) {
+      return rect.isSquare();
+    }
     const width = Math.abs(rect.bottomRight.x - rect.topLeft.x);
     const height = Math.abs(rect.bottomRight.y - rect.topLeft.y);
     return width === height;

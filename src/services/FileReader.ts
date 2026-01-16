@@ -10,7 +10,9 @@ export class FileReader {
     for await (const line of rl) {
       const trimmed = line.trim();
       if (!trimmed || trimmed.startsWith('#')) continue;
-      lines.push(trimmed);
+      const withoutComment = trimmed.split('#')[0].trim();
+      if (!withoutComment) continue;
+      lines.push(withoutComment);
     }
 
     return lines;

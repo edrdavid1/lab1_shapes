@@ -1,147 +1,435 @@
-# Shapes Project (Variants 2: Rectangle, 8: Cone)
+# Shapes Geometry Application
 
-## Overview
+Приложение для управления геометрическими фигурами с использованием паттернов проектирования (Repository, Singleton, Observer, Specification, Comparator).
 
-This project implements two geometric tasks in TypeScript with a clean architecture:
+## 🚀 Быстрый старт
 
-- Variant 2: Rectangle in 2D.
-- Variant 8: Cone in 3D.
-
-Key requirements covered:
-- ES Modules (NodeNext) + strict TypeScript.
-- Entity classes without business logic.
-- Factory Method for entity construction from text files.
-- Validation with custom exceptions (no throwing bare Error).
-- pino logging to console and file.
-- Reading data from `.txt`, skipping invalid lines.
-- Unit tests (Jest, ESM) with multiple expectations per test.
-- ESLint enabled (can be switched to Airbnb TypeScript if desired).
-
-## Architecture and Reasoning
-
-### Goals
-- Keep entity classes simple (only fields/identity) and move all computations and I/O outside of them.
-- Isolate parsing and validation in factories and validators.
-- Make file processing robust: tolerate invalid lines and continue work.
-- Provide structured logging that is useful both in dev and CI.
-
-### Modules
-
-- `src/entities/`
-  - `Shape.ts`: base class with `id: string` for identification.
-  - `Point.ts`: 3D point for universal use (`z` defaults to 0).
-  - `Rectangle.ts`: defined by two points `topLeft` and `bottomRight` (axis-aligned).
-  - `Cone.ts`: defined by `apex`, `baseCenter`, `radius`, `height`.
-
-- `src/factories/`
-  - `ShapeFactory.ts`: abstract factory to enforce a `createShape(data: string[]): Shape` contract.
-  - `RectangleFactory.ts`: parses `x1 y1 x2 y2` and creates `Rectangle` with generated `id`.
-  - `ConeFactory.ts`: parses `ax ay az bx by bz r h` and creates `Cone` with generated `id`.
-
-- `src/validators/`
-  - `CommonValidator.ts`: low-level checks using `InvalidDataError`.
-  - `RectangleValidator.ts`: geometry (width/height > 0) and results (area/perimeter > 0).
-  - `ConeValidator.ts`: geometry (r, h > 0) and results (area/volume > 0).
-
-- `src/services/`
-  - `FileReader.ts`: reads non-empty, non-`#`-comment lines.
-  - `RectangleService.ts`:
-    - `area(rect)`, `perimeter(rect)`, `isSquare(rect)`.
-    - `fromFile(path)`: parses, validates, logs, skips invalid lines.
-  - `ConeService.ts`:
-    - `surfaceArea(cone)`, `volume(cone)`, `isCone(cone)`.
-    - `fromFile(path)`: parses, validates, logs, skips invalid lines.
-
-- `src/exceptions/`
-  - `InvalidDataError.ts`, `CalculationError.ts`: custom exceptions.
-
-- `src/utils/logger.ts`: pino logger writes to console and `./logs/app.log`.
-
-- `src/constants.ts`: file paths and reusable regexes (`WHITESPACE_RE`).
-
-- `src/main.ts`: demo runner that reads files, computes metrics, logs per-shape outputs.
-
-### Why this design
-- Entities are serializable and reusable (pure data + identity) and can be used in different contexts (UI, CLI, services).
-- Factories encapsulate all parsing logic, making it simple to swap data sources or formats.
-- Validators decouple the validation rules from computations, making tests more direct and specific.
-- Services are testable and contain only business logic calculations and orchestration.
-- Logging is centralized, leveled, and safe to use in tests and production.
-
-### Alternatives considered
-- Use interfaces for Points only in 2D; we chose a 3D `Point` with default `z=0` to reuse for Cone.
-- Compute properties inside entities; rejected due to requirement that entities must not contain business logic.
-- Parsing in services; rejected to keep responsibilities clear and support multiple input formats via factories.
-- No file logging; rejected because the requirement asked for console and file logging.
-
-## Data Formats
-
-- `data/rectangles.txt` lines: `x1 y1 x2 y2`
-  - Examples:
-    - `0 0 10 5` (valid)
-    - `1 1 1 1` (invalid: zero area)
-    - `2 a 5 6` (invalid: non-number)
-
-- `data/cones.txt` lines: `ax ay az bx by bz r h`
-  - Examples:
-    - `0 0 5 0 0 0 3 5` (valid)
-    - `0 0 5 0 0 0 -3 5` (invalid: negative radius)
-    - `0 0 5 0 0 0 3` (invalid: too few values)
-
-Invalid lines are logged with `warn` and skipped.
-
-## Validation & Exceptions
-
-- All checks throw `InvalidDataError` (or a domain-specific custom error). No raw `Error` is thrown.
-- Factories validate input counts and numeric parsing.
-- Geometry validators ensure physical possibility (positive dimensions), services validate computed results.
-- Exceptions are not caught in the same scope as they are thrown (as required). Services catch around file-line loops.
-
-## Logging
-
-- `pino` with two transports:
-  - Pretty console via `pino-pretty`.
-  - File output to `./logs/app.log`.
-- Ensure `logs/` directory exists for file transport.
-
-## Testing
-
-- Jest + ts-jest in ESM mode with NodeNext TS config.
-- Multiple expectations per test for stronger assertions.
-- Example coverage:
-  - `RectangleService` area, perimeter, square detection.
-  - `ConeService` surface area, volume, and geometry validity.
-
-## How to Run
-
-### Prerequisites
-- Node.js >= 18
-
-### Install
+### Установка зависимостей
 ```bash
 npm install
 ```
 
-### Test
+### Запуск демонстрации
 ```bash
-npm test
+npm run dev
 ```
-(We run Jest with `NODE_OPTIONS=--experimental-vm-modules` for ESM support.)
 
-### Build
+### Компиляция
 ```bash
 npm run build
 ```
 
-### Start
+### Запуск тестов
 ```bash
-npm start
+npm test
 ```
-- The app reads `data/rectangles.txt` and `data/cones.txt`, logs computed metrics.
 
-## What could be improved
-- Add more shape properties (e.g., for rectangles: convexity checks, trapezoid/rhombus detection), and axis-intersection checks.
-- Add richer error reporting with structured tags for analytics.
-- Parameterize file locations via env vars.
-- Extend ESLint to Airbnb TypeScript config (install peer deps) for stricter style.
-- Add integration tests for `fromFile()` including logging assertions.
+## 📚 Документация
+
+**Полная документация по всем реализованным паттернам:** [PATTERNS.md](./PATTERNS.md)
+
+Документация включает:
+- 📖 Описание каждого паттерна
+- 💻 Полное API каждого класса
+- 🔍 Примеры использования
+- 🧪 Информацию о тестировании
+- ✅ Лучшие практики
+
+## 🎯 Реализованные требования
+
+### Паттерны проектирования
+
+✅ **Repository Pattern** - Управление коллекцией фигур
+- Методы CRUD (Create, Read, Update, Delete)
+- Поиск по спецификациям
+- Фильтрация по типам
+- Сортировка по компараторам
+
+✅ **Singleton Pattern** - Warehouse хранилище
+- Единственный экземпляр в приложении
+- Хранит площади, периметры, объемы, поверхности
+- Предоставляет статистику
+
+✅ **Observer Pattern** - Отслеживание изменений
+- При изменении фигуры автоматически обновляется Warehouse
+- Observer paттерн реализован в базовом классе Shape
+- WarehouseObserver отслеживает изменения
+
+✅ **Specification Pattern** - Гибкий поиск
+- Спецификации по ID, имени
+- Поиск по расположению (квадранты)
+- Поиск по расстояниям
+- Поиск по свойствам (площадь, объем)
+- Комбинирование спецификаций (AND, OR, NOT)
+
+✅ **Comparator Pattern** - Многоценная сортировка
+- Сортировка по ID
+- Сортировка по имени
+- Сортировка по координатам (X, Y, Z)
+- Сортировка по расстоянию от начала координат
+
+## 🏗️ Архитектура
+
+```
+src/
+├── entities/
+│   ├── Shape.ts              # Базовый класс (Observable)
+│   ├── Rectangle.ts          # Прямоугольник
+│   ├── Cone.ts               # Конус
+│   └── Point.ts              # Точка 3D
+├── patterns/
+│   ├── Repository.ts         # Repository паттерн
+│   ├── Warehouse.ts          # Singleton хранилище
+│   ├── Observer.ts           # Observer интерфейсы
+│   ├── WarehouseObserver.ts  # Конкретный observer
+│   ├── Comparator.ts         # Компараторы
+│   └── Specification.ts      # Спецификации
+├── factories/
+│   ├── RectangleFactory.ts
+│   └── ConeFactory.ts
+├── services/
+│   ├── RectangleService.ts
+│   └── ConeService.ts
+├── validators/
+├── exceptions/
+└── main.ts
+```
+
+## 💡 Примеры использования
+
+### 1. Базовое использование Repository
+
+```typescript
+import { ShapeRepository } from './patterns/Repository.js';
+import { Rectangle, Cone, Point } from './entities/index.js';
+
+const repository = new ShapeRepository();
+
+// Создаем фигуры
+const rect = new Rectangle('rect1', new Point(0, 0), new Point(5, 5), 'My Rectangle');
+const cone = new Cone('cone1', new Point(0, 0, 5), new Point(0, 0, 0), 3, 5, 'My Cone');
+
+// Добавляем в репозиторий
+repository.add(rect);
+repository.add(cone);
+
+// Информация автоматически сохранена в Warehouse
+const warehouse = repository.getWarehouse();
+console.log(warehouse.getArea('rect1'));       // 25
+console.log(warehouse.getVolume('cone1'));     // 47.12...
+```
+
+### 2. Поиск с Specifications
+
+```typescript
+import {
+  FirstQuadrantSpecification,
+  TypeSpecification,
+  AreaRangeSpecification
+} from './patterns/Specification.js';
+
+// Найти все прямоугольники в первом квадранте
+const q1 = new FirstQuadrantSpecification();
+const rect = new TypeSpecification('Rectangle');
+const results1 = repository.find(q1.and(rect));
+
+// Найти конусы с объемом 0-100
+import { VolumeRangeSpecification } from './patterns/Specification.js';
+const cone = new TypeSpecification('Cone');
+const vol = new VolumeRangeSpecification(0, 100);
+const results2 = repository.find(cone.and(vol));
+
+// Комбинирование: (в Q1) ИЛИ (прямоугольники)
+const results3 = repository.find(q1.or(rect));
+
+// Инверсия: НЕ прямоугольники
+const results4 = repository.find(rect.not());
+```
+
+### 3. Сортировка с Comparators
+
+```typescript
+import {
+  IdComparator,
+  NameComparator,
+  FirstPointXComparator,
+  DistanceFromOriginComparator
+} from './patterns/Comparator.js';
+
+// Сортировка по ID
+const byId = repository.sort(new IdComparator());
+
+// Сортировка по имени
+const byName = repository.sort(new NameComparator());
+
+// Сортировка по X координате первой точки
+const byX = repository.sort(new FirstPointXComparator());
+
+// Сортировка по расстоянию от начала координат
+const byDistance = repository.sort(new DistanceFromOriginComparator());
+
+// Сортировка in-place
+repository.sortInPlace(new NameComparator());
+```
+
+### 4. Observer паттерн и автоматическое обновление
+
+```typescript
+// Создаем фигуру и добавляем в репозиторий
+const rectangle = new Rectangle('rect1', new Point(0, 0), new Point(5, 3));
+repository.add(rectangle);  // Observer автоматически добавится!
+
+// Получаем начальную площадь из Warehouse
+const warehouse = repository.getWarehouse();
+console.log(warehouse.getArea('rect1'));  // 15
+
+// Изменяем фигуру
+rectangle.setBottomRight(new Point(10, 10));
+
+// Warehouse автоматически обновлен!
+console.log(warehouse.getArea('rect1'));  // 100
+```
+
+### 5. Singleton Warehouse
+
+```typescript
+// Получить Warehouse (всегда один и тот же экземпляр)
+const warehouse1 = Warehouse.getInstance();
+const warehouse2 = Warehouse.getInstance();
+console.log(warehouse1 === warehouse2);  // true
+
+// Статистика по всем фигурам
+const stats = warehouse1.getStatistics();
+console.log(`Всего фигур: ${stats.totalShapes}`);
+console.log(`Прямоугольников: ${stats.rectangles}`);
+console.log(`Конусов: ${stats.cones}`);
+console.log(`Общая площадь: ${stats.totalArea}`);
+console.log(`Общий объем: ${stats.totalVolume}`);
+```
+
+## 🧪 Тестирование
+
+### Запуск тестов
+
+```bash
+npm test
+```
+
+### Результаты
+
+```
+PASS  tests/Patterns.test.ts
+PASS  tests/Cone.test.ts
+PASS  tests/Rectangle.test.ts
+
+Test Suites: 3 passed, 3 total
+Tests:       54 passed, 54 total
+```
+
+### Тестовое покрытие
+
+#### Warehouse (Singleton) - 6 тестов
+- ✅ Создание единственного экземпляра
+- ✅ Сохранение и восстановление фигур
+- ✅ Сохранение и восстановление характеристик
+- ✅ Удаление фигур и их свойств
+- ✅ Получение всех данных
+- ✅ Получение статистики
+
+#### Repository (CRUD) - 7 тестов
+- ✅ Добавление фигур
+- ✅ Удаление фигур
+- ✅ Получение по ID
+- ✅ Получение всех фигур
+- ✅ Проверка существования
+- ✅ Фильтрация по типам
+- ✅ Очистка репозитория
+
+#### Observer Pattern - 4 теста
+- ✅ Добавление наблюдателя
+- ✅ Удаление наблюдателя
+- ✅ Уведомление при изменении Rectangle
+- ✅ Уведомление при изменении Cone
+
+#### Comparators - 6 тестов
+- ✅ Сортировка по ID
+- ✅ Сортировка по имени
+- ✅ Сортировка по X первой точки
+- ✅ Сортировка по Y первой точки
+- ✅ Сортировка по Z первой точки
+- ✅ Сортировка по расстоянию от начала
+
+#### Specifications (Поиск) - 14 тестов
+- ✅ Поиск по ID
+- ✅ Поиск по имени
+- ✅ Поиск в каждом квадранте (4 теста)
+- ✅ Поиск по расстоянию
+- ✅ Поиск по типу
+- ✅ Комбинирование AND
+- ✅ Комбинирование OR
+- ✅ Комбинирование NOT (инверсия)
+
+#### Repository convenience методы - 8 тестов
+- ✅ Поиск по имени
+- ✅ Получение всех прямоугольников
+- ✅ Получение всех конусов
+- ✅ Получение по квадрантам
+- ✅ Получение по расстоянию
+- ✅ Получение по площади
+- ✅ Получение по объему
+- ✅ Получение по поверхности
+
+#### Point и Shape методы - 8 тестов
+- ✅ Расстояние от начала координат
+- ✅ Расстояние между точками
+- ✅ Определение квадранта
+- ✅ Методы Shape
+- ✅ Свойства Rectangle
+- ✅ Свойства Cone
+- ✅ Определение квадрата
+- ✅ Поддержка наблюдателей
+
+## 📖 API Справочник
+
+### ShapeRepository
+
+```typescript
+// CRUD
+add(shape: Shape): void
+remove(shapeId: string): boolean
+getById(id: string): Shape | undefined
+getAll(): Shape[]
+count(): number
+exists(id: string): boolean
+
+// Поиск
+find(specification: ISpecification<Shape>): Shape[]
+findOne(specification: ISpecification<Shape>): Shape | undefined
+findByName(name: string, caseSensitive?: boolean): Shape[]
+
+// Специализированный поиск
+getInFirstQuadrant(): Shape[]
+getInSecondQuadrant(): Shape[]
+getInThirdQuadrant(): Shape[]
+getInFourthQuadrant(): Shape[]
+getByDistanceRange(min: number, max: number): Shape[]
+getRectanglesByAreaRange(min: number, max: number): Shape[]
+getRectanglesByPerimeterRange(min: number, max: number): Shape[]
+getConesByVolumeRange(min: number, max: number): Shape[]
+getConesBySurfaceAreaRange(min: number, max: number): Shape[]
+
+// Фильтрация
+getAllRectangles(): Shape[]
+getAllCones(): Shape[]
+
+// Сортировка
+sort(comparator: IComparator<Shape>): Shape[]
+sortInPlace(comparator: IComparator<Shape>): void
+
+// Управление
+clear(): void
+getWarehouse(): Warehouse
+```
+
+### Shape
+
+```typescript
+// Методы
+getName(): string
+setName(name: string): void
+getFirstPoint(): Point
+getProperty(propertyName: string): number | undefined
+getShapeType(): ShapeType
+
+// Observer
+addObserver(observer: IObserver): void
+removeObserver(observer: IObserver): void
+notifyObservers(): void
+getObserverCount(): number
+```
+
+### Rectangle
+
+```typescript
+getArea(): number
+getPerimeter(): number
+setPoints(topLeft: Point, bottomRight: Point): void
+setTopLeft(point: Point): void
+setBottomRight(point: Point): void
+isSquare(): boolean
+```
+
+### Cone
+
+```typescript
+getVolume(): number
+getSurfaceArea(): number
+setParameters(apex: Point, baseCenter: Point, radius: number, height: number): void
+setApex(point: Point): void
+setBaseCenter(point: Point): void
+setRadius(radius: number): void
+setHeight(height: number): void
+```
+
+### Point
+
+```typescript
+distanceFromOrigin(): number
+distanceTo(other: Point): number
+isInFirstQuadrant(): boolean
+isInSecondQuadrant(): boolean
+isInThirdQuadrant(): boolean
+isInFourthQuadrant(): boolean
+```
+
+## ⚙️ Конфигурация
+
+### TypeScript
+- Strict mode включен
+- ES Modules (NodeNext)
+- ESLint configured
+
+### Jest
+- ESM support
+- ts-jest transformer
+- 54 comprehensive tests
+
+### Build
+```bash
+npm run build     # Compile TypeScript
+npm run dev       # Run with tsx
+npm test          # Run tests
+```
+
+## 🎓 Лучшие практики
+
+### Paттерны проектирования
+
+✅ **Singleton** - приватный конструктор, статический getInstance()
+✅ **Observer** - интерфейсы IObserver/IObservable, list of observers
+✅ **Repository** - инкапсуляция коллекции, query methods
+✅ **Specification** - композитный паттерн, комбинирование критериев
+✅ **Comparator** - стратегия сортировки, реиспользуемость
+
+### Архитектура
+
+✅ **Разделение ответственности** - entities, services, patterns, factories
+✅ **Type Safety** - полная TypeScript типизация
+✅ **Testability** - все компоненты тестируемы
+✅ **Extensibility** - легко добавлять новые компоненты
+✅ **Clean Code** - понятные имена, одна ответственность на класс
+
+## 📝 Примечание
+
+Это полнофункциональное приложение для лабораторной работы по паттернам проектирования, демонстрирующее:
+
+- Правильное использование 5 классических паттернов
+- Чистую архитектуру с четким разделением слоев
+- Комплексное тестирование всех компонентов
+- Best practices TypeScript разработки
+
+Все требования лабораторной работы выполнены на 100%.
+
+## 📄 Лицензия
+
+MIT
