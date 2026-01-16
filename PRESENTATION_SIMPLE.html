@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design Patterns - Data Flow Presentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: #fff;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .slide {
+            display: none;
+            padding: 40px;
+            background: #16213e;
+            border: 2px solid #00d4ff;
+            border-radius: 10px;
+            min-height: 600px;
+            margin-bottom: 20px;
+        }
+        
+        .slide.active {
+            display: block;
+        }
+        
+        h1 {
+            color: #00d4ff;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            color: #00ffcc;
+            font-size: 2em;
+            margin: 20px 0 15px 0;
+            border-bottom: 2px solid #00ffcc;
+            padding-bottom: 10px;
+        }
+        
+        h3 {
+            color: #00d4ff;
+            font-size: 1.3em;
+            margin: 15px 0 10px 0;
+        }
+        
+        p {
+            font-size: 1.05em;
+            line-height: 1.8;
+            margin: 10px 0;
+            color: #ccc;
+        }
+        
+        .code {
+            background: #0f3460;
+            border-left: 4px solid #00d4ff;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #00ff88;
+            overflow-x: auto;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        button {
+            background: #00d4ff;
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            margin: 0 10px;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background: #00ffcc;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .counter {
+            text-align: center;
+            font-size: 1.1em;
+            color: #00d4ff;
+            margin: 20px 0;
+        }
+        
+        .box {
+            background: #0f3460;
+            border: 1px solid #00d4ff;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .benefit {
+            background: #1a4d2e;
+            border-left: 4px solid #00ff64;
+            padding: 10px 15px;
+            margin: 8px 0;
+            border-radius: 3px;
+            color: #00ff64;
+        }
+        
+        .diagram {
+            background: #0f3460;
+            border: 1px solid #00d4ff;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            color: #00ffaa;
+            line-height: 1.6;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 10px;
+            border: 1px solid #00d4ff;
+            text-align: left;
+        }
+        
+        th {
+            background: #0f3460;
+            color: #00ffcc;
+        }
+        
+        .header-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-section">
+            <h1>🏗️ Design Patterns - Data Flow</h1>
+            <p style="font-size: 1.2em; color: #00d4ff;">Shapes Geometry Application</p>
+        </div>
+        
+        <!-- Slide 1: Title -->
+        <div class="slide active">
+            <h1>Design Patterns Implementation</h1>
+            <h2 style="margin-top: 40px;">5 Классических Паттернов</h2>
+            
+            <div class="box">
+                <h3>1. Repository Pattern</h3>
+                <p>Централизованное управление коллекцией геометрических фигур</p>
+            </div>
+            
+            <div class="box">
+                <h3>2. Singleton Pattern (Warehouse)</h3>
+                <p>Единственный экземпляр хранилища характеристик фигур</p>
+            </div>
+            
+            <div class="box">
+                <h3>3. Observer Pattern</h3>
+                <p>Автоматическое обновление Warehouse при изменении фигур</p>
+            </div>
+            
+            <div class="box">
+                <h3>4. Specification Pattern</h3>
+                <p>Гибкий и композитный поиск фигур</p>
+            </div>
+            
+            <div class="box">
+                <h3>5. Comparator Pattern</h3>
+                <p>Переиспользуемые стратегии сортировки</p>
+            </div>
+        </div>
+        
+        <!-- Slide 2: Repository -->
+        <div class="slide">
+            <h2>Repository Pattern</h2>
+            <p>Инкапсулирует доступ к коллекции фигур</p>
+            
+            <h3>Файл: src/patterns/Repository.ts</h3>
+            
+            <div class="code">
+const repository = new ShapeRepository();
+
+// CREATE
+const rect = new Rectangle('rect1', p1, p2);
+repository.add(rect);
+
+// READ
+const found = repository.getById('rect1');
+const all = repository.getAll();
+
+// DELETE
+repository.remove('rect1');
+            </div>
+            
+            <h3>Методы Repository:</h3>
+            <div class="benefit">✅ add(shape) - добавляет фигуру и присоединяет наблюдателя</div>
+            <div class="benefit">✅ remove(id) - удаляет фигуру из коллекции</div>
+            <div class="benefit">✅ find(spec) - ищет фигуры по спецификации</div>
+            <div class="benefit">✅ sort(comp) - сортирует фигуры по компаратору</div>
+            <div class="benefit">✅ getAll() - возвращает все фигуры</div>
+        </div>
+        
+        <!-- Slide 3: Singleton -->
+        <div class="slide">
+            <h2>Singleton Pattern (Warehouse)</h2>
+            <p>Гарантирует единственный экземпляр хранилища</p>
+            
+            <h3>Файл: src/patterns/Warehouse.ts</h3>
+            
+            <div class="code">
+export class Warehouse {
+  private static instance: Warehouse | null = null;
+  private areas: Map&lt;string, number&gt; = new Map();
+
+  private constructor() {}  // Приватный конструктор!
+
+  public static getInstance(): Warehouse {
+    if (!Warehouse.instance) {
+      Warehouse.instance = new Warehouse();
+    }
+    return Warehouse.instance;
+  }
+
+  public setArea(id: string, area: number) {
+    this.areas.set(id, area);
+  }
+}
+            </div>
+            
+            <div class="benefit">✅ Глобальный доступ: Warehouse.getInstance()</div>
+            <div class="benefit">✅ Гарантированно только один экземпляр</div>
+            <div class="benefit">✅ Централизованная статистика</div>
+        </div>
+        
+        <!-- Slide 4: Observer -->
+        <div class="slide">
+            <h2>Observer Pattern</h2>
+            <p>Автоматическое обновление Warehouse при изменении фигур</p>
+            
+            <h3>Файлы:</h3>
+            <div class="benefit">📁 src/patterns/Observer.ts - интерфейсы</div>
+            <div class="benefit">📁 src/patterns/WarehouseObserver.ts - реализация</div>
+            <div class="benefit">📁 src/entities/Shape.ts - Observable класс</div>
+            
+            <h3>Поток данных:</h3>
+            <div class="diagram">
+1. rectangle.setBottomRight(newPoint)
+              ↓
+2. Rectangle пересчитывает свойства
+              ↓
+3. Shape уведомляет наблюдателей
+   notifyObservers()
+              ↓
+4. WarehouseObserver получает обновление
+   update(subject)
+              ↓
+5. Warehouse обновляется АВТОМАТИЧЕСКИ!
+   warehouse.setArea(id, newArea)
+            </div>
+            
+            <div class="benefit">✅ Автоматическое обновление</div>
+            <div class="benefit">✅ Слабая связь между объектами</div>
+        </div>
+        
+        <!-- Slide 5: Specification -->
+        <div class="slide">
+            <h2>Specification Pattern</h2>
+            <p>Гибкий поиск с возможностью комбинирования критериев</p>
+            
+            <h3>Файл: src/patterns/Specification.ts</h3>
+            
+            <div class="code">
+// Простой поиск
+const spec1 = new FirstQuadrantSpecification();
+const results1 = repository.find(spec1);
+
+// Комбинирование: И
+const spec2 = new TypeSpecification('Rectangle');
+const combined = spec1.and(spec2);
+const results2 = repository.find(combined);
+
+// Инверсия: НЕ
+const inverted = spec2.not();
+const results3 = repository.find(inverted);
+            </div>
+            
+            <h3>Доступные спецификации:</h3>
+            <div class="benefit">📍 FirstQuadrantSpecification - X > 0, Y > 0</div>
+            <div class="benefit">📍 SecondQuadrantSpecification - X < 0, Y > 0</div>
+            <div class="benefit">📏 DistanceRangeSpecification(min, max)</div>
+            <div class="benefit">🔹 TypeSpecification('Rectangle' | 'Cone')</div>
+            <div class="benefit">📊 AreaRangeSpecification(min, max)</div>
+        </div>
+        
+        <!-- Slide 6: Comparator -->
+        <div class="slide">
+            <h2>Comparator Pattern</h2>
+            <p>Переиспользуемые стратегии сортировки</p>
+            
+            <h3>Файл: src/patterns/Comparator.ts</h3>
+            
+            <div class="code">
+// Сортировка по имени
+const sorted1 = repository.sort(new NameComparator());
+
+// Сортировка по X координате
+const sorted2 = repository.sort(new FirstPointXComparator());
+
+// Сортировка по расстоянию
+const sorted3 = repository.sort(
+  new DistanceFromOriginComparator()
+);
+            </div>
+            
+            <h3>Доступные компараторы:</h3>
+            <div class="benefit">🔤 IdComparator - по ID (A-Z)</div>
+            <div class="benefit">🔤 NameComparator - по имени (A-Z)</div>
+            <div class="benefit">📏 FirstPointXComparator - по X координате</div>
+            <div class="benefit">📏 FirstPointYComparator - по Y координате</div>
+            <div class="benefit">📏 FirstPointZComparator - по Z координате</div>
+            <div class="benefit">📊 DistanceFromOriginComparator - по расстоянию</div>
+        </div>
+        
+        <!-- Slide 7: Data Flow -->
+        <div class="slide">
+            <h2>Полный Поток Данных</h2>
+            <h3>Добавление фигуры в систему:</h3>
+            
+            <div class="diagram">
+1. Создание фигуры
+   const rect = new Rectangle('id', point1, point2)
+   
+2. Добавление в Repository
+   repository.add(rect)
+   ↓
+   - Сохраняет в Map: shapes.set('id', rect)
+   - Создает WarehouseObserver
+   - Добавляет к фигуре: rect.addObserver(observer)
+   - Инициирует update: observer.update(rect)
+   
+3. Warehouse обновляется
+   warehouse.setArea('id', 15)
+   
+✅ Данные готовы!
+            </div>
+            
+            <p style="color: #00ff64; margin-top: 20px;">
+                <strong>Результат:</strong> Система автоматически синхронизирует все данные через Observer паттерн!
+            </p>
+        </div>
+        
+        <!-- Slide 8: Architecture -->
+        <div class="slide">
+            <h2>Архитектура Приложения</h2>
+            
+            <div class="diagram">
+src/patterns/
+├── Repository.ts         (CRUD + поиск + сортировка)
+├── Warehouse.ts          (Singleton хранилище)
+├── Observer.ts           (интерфейсы)
+├── WarehouseObserver.ts  (реализация)
+├── Specification.ts      (14+ спецификаций)
+├── Comparator.ts         (6 компараторов)
+└── index.ts              (экспорты)
+
+src/entities/
+├── Shape.ts              (Observable базовый класс)
+├── Rectangle.ts          (прямоугольник)
+├── Cone.ts               (конус)
+├── Point.ts              (3D точка)
+└── index.ts              (экспорты)
+
+src/factories/
+├── RectangleFactory.ts
+└── ConeFactory.ts
+            </div>
+            
+            <h3 style="margin-top: 20px;">Связи между компонентами:</h3>
+            <div class="benefit">📦 Repository управляет Warehouse и Shapes</div>
+            <div class="benefit">📦 Shapes управляют Observers</div>
+            <div class="benefit">📦 Warehouse хранит характеристики</div>
+        </div>
+        
+        <!-- Slide 9: Testing -->
+        <div class="slide">
+            <h2>Тестирование</h2>
+            <h3>54 Комплексных Теста</h3>
+            
+            <table>
+                <tr>
+                    <th>Компонент</th>
+                    <th>Тестов</th>
+                    <th>Описание</th>
+                </tr>
+                <tr>
+                    <td>Warehouse (Singleton)</td>
+                    <td>6</td>
+                    <td>Единственность, хранение, статистика</td>
+                </tr>
+                <tr>
+                    <td>Repository (CRUD)</td>
+                    <td>7</td>
+                    <td>Добавление, удаление, получение</td>
+                </tr>
+                <tr>
+                    <td>Observer Pattern</td>
+                    <td>4</td>
+                    <td>Добавление, удаление, уведомление</td>
+                </tr>
+                <tr>
+                    <td>Comparators</td>
+                    <td>6</td>
+                    <td>Сортировка по разным критериям</td>
+                </tr>
+                <tr>
+                    <td>Specifications</td>
+                    <td>14</td>
+                    <td>Поиск, комбинирование, инверсия</td>
+                </tr>
+                <tr>
+                    <td>Остальные</td>
+                    <td>17</td>
+                    <td>Point, Shape, Repository методы</td>
+                </tr>
+            </table>
+            
+            <div class="code" style="margin-top: 20px;">
+$ npm test
+PASS  tests/Patterns.test.ts
+
+✅ 54 passed, 54 total
+            </div>
+        </div>
+        
+        <!-- Slide 10: Summary -->
+        <div class="slide">
+            <h2>Итоговая Сводка</h2>
+            
+            <h3>✨ Что было реализовано:</h3>
+            <div class="benefit">✅ Правильное применение 5 классических паттернов</div>
+            <div class="benefit">✅ Чистая архитектура с разделением ответственности</div>
+            <div class="benefit">✅ Полный TypeScript с type safety</div>
+            <div class="benefit">✅ 54 комплексных теста (100% pass rate)</div>
+            <div class="benefit">✅ Автоматическое обновление через Observer</div>
+            <div class="benefit">✅ Гибкий поиск через Specification</div>
+            <div class="benefit">✅ Переиспользуемые компараторы</div>
+            <div class="benefit">✅ Production-ready код</div>
+            
+            <h3 style="margin-top: 30px;">📊 Статистика:</h3>
+            <div class="benefit">📈 25 TypeScript файлов</div>
+            <div class="benefit">📈 2000+ строк кода</div>
+            <div class="benefit">📈 100% type safety (Strict mode)</div>
+            <div class="benefit">📈 Полная документация</div>
+            
+            <p style="text-align: center; margin-top: 30px; font-size: 1.3em; color: #00ff64;">
+                <strong>🎉 ГОТОВО К СДАЧЕ! 🎉</strong>
+            </p>
+        </div>
+        
+        <div class="controls">
+            <button id="prevBtn" onclick="previousSlide()">← Назад</button>
+            <button id="nextBtn" onclick="nextSlide()">Далее →</button>
+        </div>
+        
+        <div class="counter">
+            Слайд <span id="current">1</span> из <span id="total">10</span>
+        </div>
+    </div>
+    
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        
+        document.getElementById('total').textContent = totalSlides;
+        
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            document.getElementById('current').textContent = currentSlide + 1;
+            
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+        
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                showSlide(currentSlide + 1);
+            }
+        }
+        
+        function previousSlide() {
+            if (currentSlide > 0) {
+                showSlide(currentSlide - 1);
+            }
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') previousSlide();
+        });
+        
+        showSlide(0);
+    </script>
+</body>
+</html>

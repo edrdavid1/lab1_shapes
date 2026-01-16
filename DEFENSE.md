@@ -721,3 +721,338 @@ npm run dev
    - Легко поддерживается
 
 Приложение полностью готово к использованию и может служить примером правильной реализации паттернов проектирования на TypeScript.
+
+---
+
+## 10. ДЕТАЛЬНЫЙ ПРИМЕР ПРОХОДА ДАННЫХ ЧЕРЕЗ СИСТЕМУ
+
+### Сценарий: Пользователь создает прямоугольник, изменяет его, и ищет в хранилище
+
+#### ШАГ 1: СОЗДАНИЕ ДАННЫХ
+**(Откройте файл: `src/entities/Rectangle.ts` - строки 1-50)**
+
+Пользователь создает новый прямоугольник с координатами:
+```typescript
+const point1 = new Point(0, 0);      // Первая точка (откройте src/entities/Point.ts)
+const point2 = new Point(5, 3);     // Вторая точка
+const rectangle = new Rectangle(
+  'rect1',
+  point1,
+  point2,
+  'My Rectangle'
+);
+```
+
+**Что происходит в Rectangle:**
+```typescript
+// src/entities/Rectangle.ts - конструктор
+this._topLeft = new Point(0, 0);
+this._bottomRight = new Point(5, 3);
+this._area = 5 * 3 = 15;           // ← Автоматический расчет!
+this._perimeter = 2 * (5 + 3) = 16; // ← Автоматический расчет!
+this.observers = [];                 // ← Пусто, наблюдатели еще не добавлены
+```
+
+---
+
+#### ШАГ 2: ДОБАВЛЕНИЕ В REPOSITORY
+**(Откройте файл: `src/patterns/Repository.ts` - метод `add()`, строки 45-70)**
+
+Теперь добавляем прямоугольник в репозиторий:
+```typescript
+repository.add(rectangle);
+```
+
+**Что происходит в Repository.add():**
+```typescript
+// src/patterns/Repository.ts - метод add (строка 50-65)
+public add(shape: Shape): void {
+  // ШАГ 2.1: Сохранение в Map
+  this.shapes.set(shape.id, rectangle);
+  
+  // ШАГ 2.2: Сохранение в Warehouse (Singleton)
+  this.warehouse.addShape(shape);
+  
+  // ШАГ 2.3: Создание наблюдателя
+  const observer = new WarehouseObserver(this.warehouse);
+  
+  // ШАГ 2.4: Добавление наблюдателя к фигуре
+  shape.addObserver(observer);
+  
+  // ШАГ 2.5: ИНИЦИИРОВАНИЕ ПЕРВОГО ОБНОВЛЕНИЯ
+  observer.update(shape);  // ← Warehouse автоматически получает данные!
+}
+```
+
+**Что происходит в Warehouse.getInstance():**
+```typescript
+// src/patterns/Warehouse.ts - строка 15-25
+public static getInstance(): Warehouse {
+  if (!Warehouse.instance) {
+    Warehouse.instance = new Warehouse();  // ← Создается ровно ОДИН раз!
+  }
+  return Warehouse.instance;  // ← Все остальные вызовы возвращают тот же объект
+}
+
+// Warehouse теперь содержит:
+areas.set('rect1', 15);        // ← ЗАПИСАНО!
+perimeters.set('rect1', 16);   // ← ЗАПИСАНО!
+```
+
+**Что происходит в WarehouseObserver.update():**
+```typescript
+// src/patterns/WarehouseObserver.ts - метод update (строки 10-20)
+public update(subject: IObservable): void {
+  const shape = subject as Rectangle | Cone;
+  if (shape instanceof Rectangle) {
+    // Получаем текущие значения фигуры
+    const area = shape.getArea();      // 15
+    const perimeter = shape.getPerimeter();  // 16
+    
+    // Сохраняем в Warehouse
+    this.warehouse.setArea(shape.id, area);
+    this.warehouse.setPerimeter(shape.id, perimeter);
+  }
+}
+```
+
+**ИТОГ ШАГА 2:** Rectangle добавлен в Repository и Warehouse синхронизирован ✅
+
+---
+
+#### ШАГ 3: ИЗМЕНЕНИЕ ДАННЫХ
+**(Откройте файл: `src/entities/Rectangle.ts` - метод `setBottomRight()`, строки 100-120)**
+
+Пользователь меняет размер прямоугольника:
+```typescript
+rectangle.setBottomRight(new Point(10, 10));
+```
+
+**Что происходит в Rectangle.setBottomRight():**
+```typescript
+// src/entities/Rectangle.ts - строка 105-115
+public setBottomRight(point: Point): void {
+  this._bottomRight = new Point(10, 10);
+  
+  // ВАЖНО: Пересчитываем свойства
+  this.calculateProperties();
+}
+
+private calculateProperties(): void {
+  // Новые расчеты
+  const width = this._bottomRight.x - this._topLeft.x = 10;
+  const height = this._bottomRight.y - this._topLeft.y = 10;
+  
+  this._area = width * height = 100;           // ← ИЗМЕНИЛОСЬ!
+  this._perimeter = 2 * (width + height) = 40; // ← ИЗМЕНИЛОСЬ!
+  
+  // ШАГ 3.1: УВЕДОМЛЯЕМ НАБЛЮДАТЕЛЕЙ
+  this.notifyObservers();  // ← Это главное!
+}
+```
+
+**Что происходит в Shape.notifyObservers():**
+```typescript
+// src/entities/Shape.ts - строка 45-55
+protected notifyObservers(): void {
+  // Для каждого наблюдателя (в нашем случае один - WarehouseObserver)
+  for (const observer of this.observers) {
+    observer.update(this);  // ← Передаем себя наблюдателю
+  }
+}
+```
+
+**Что происходит в WarehouseObserver.update() СНОВА:**
+```typescript
+// src/patterns/WarehouseObserver.ts - строка 10-20
+public update(subject: IObservable): void {
+  const shape = subject as Rectangle;
+  
+  // Получаем НОВЫЕ значения
+  const newArea = shape.getArea();      // 100 (было 15!)
+  const newPerimeter = shape.getPerimeter();  // 40 (было 16!)
+  
+  // Обновляем Warehouse с новыми значениями
+  this.warehouse.setArea(shape.id, newArea);        // ← 100
+  this.warehouse.setPerimeter(shape.id, newPerimeter);  // ← 40
+}
+```
+
+**Что происходит в Warehouse.setArea():**
+```typescript
+// src/patterns/Warehouse.ts - метод setArea (строка 50-55)
+public setArea(id: string, area: number): void {
+  this.areas.set(id, area);  // ← Обновляется с новым значением!
+}
+```
+
+**ИТОГ ШАГА 3:** Warehouse АВТОМАТИЧЕСКИ обновлен благодаря Observer паттерну ✅
+
+---
+
+#### ШАГ 4: ПОИСК ЧЕРЕЗ SPECIFICATIONS
+**(Откройте файл: `src/patterns/Specification.ts` - строки 1-50)**
+
+Пользователь хочет найти все прямоугольники площадью > 50:
+```typescript
+const spec = new AreaRangeSpecification(50, 1000);
+const results = repository.find(spec);
+```
+
+**Что происходит в Repository.find():**
+```typescript
+// src/patterns/Repository.ts - метод find (строки 110-125)
+public find(specification: ISpecification<Shape>): Shape[] {
+  const results: Shape[] = [];
+  
+  // Получаем все фигуры
+  const allShapes = this.getAll();  // [rectangle, ...]
+  
+  // Для каждой фигуры проверяем спецификацию
+  for (const shape of allShapes) {
+    if (specification.isSatisfiedBy(shape)) {
+      results.push(shape);
+    }
+  }
+  
+  return results;
+}
+```
+
+**Что происходит в AreaRangeSpecification.isSatisfiedBy():**
+```typescript
+// src/patterns/Specification.ts - строка 180-195
+export class AreaRangeSpecification extends AbstractSpecification<Shape> {
+  public isSatisfiedBy(candidate: Shape): boolean {
+    if (candidate instanceof Rectangle) {
+      const area = candidate.getArea();  // 100 (из обновленного хранилища!)
+      return area >= this.minArea && area <= this.maxArea;
+      // 100 >= 50 && 100 <= 1000 = TRUE ✅
+    }
+    return false;
+  }
+}
+```
+
+**ИТОГ ШАГА 4:** Rectangle найден потому что его площадь = 100 (которая была обновлена в шаге 3) ✅
+
+---
+
+#### ШАГ 5: СОРТИРОВКА ЧЕРЕЗ COMPARATORS
+**(Откройте файл: `src/patterns/Comparator.ts` - строки 1-50)**
+
+Пользователь хочет отсортировать результаты по имени:
+```typescript
+const sorted = repository.sort(new NameComparator());
+```
+
+**Что происходит в Repository.sort():**
+```typescript
+// src/patterns/Repository.ts - метод sort (строки 130-145)
+public sort(comparator: IComparator<Shape>): Shape[] {
+  // Копируем все фигуры
+  const allShapes = [...this.getAll()];
+  
+  // Сортируем используя компаратор
+  allShapes.sort((a, b) => comparator.compare(a, b));
+  
+  return allShapes;
+}
+```
+
+**Что происходит в NameComparator.compare():**
+```typescript
+// src/patterns/Comparator.ts - строка 30-40
+export class NameComparator implements IComparator<Shape> {
+  public compare(a: Shape, b: Shape): number {
+    // Получаем имена
+    const nameA = a.getName();  // 'My Rectangle'
+    const nameB = b.getName();  // 'Other Rectangle'
+    
+    // Сравниваем строки
+    return nameA.localeCompare(nameB);
+    // Результат: -1 (A < B), 0 (A == B), или 1 (A > B)
+  }
+}
+```
+
+**ИТОГ ШАГА 5:** Фигуры отсортированы по имени ✅
+
+---
+
+### ПОЛНЫЙ ПУТЬ ДАННЫХ В ОДНОЙ ДИАГРАММЕ
+
+```
+1. СОЗДАНИЕ (src/entities/Rectangle.ts)
+   └─ rectangle = new Rectangle('rect1', p1, p2)
+   └─ Area = 15, Perimeter = 16
+
+2. ДОБАВЛЕНИЕ (src/patterns/Repository.ts)
+   └─ repository.add(rectangle)
+   └─ Сохранение в Map: shapes.set('rect1', rectangle)
+   └─ Создание: observer = new WarehouseObserver(warehouse)
+   └─ Присоединение: rectangle.addObserver(observer)
+   └─ Инициирование: observer.update(rectangle)
+
+3. СИНХРОНИЗАЦИЯ (src/patterns/WarehouseObserver.ts)
+   └─ observer.update(rectangle)
+   └─ warehouse.setArea('rect1', 15)
+   └─ warehouse.setPerimeter('rect1', 16)
+
+4. WAREHOUSE (src/patterns/Warehouse.ts - Singleton)
+   └─ areas.set('rect1', 15) ✅
+   └─ perimeters.set('rect1', 16) ✅
+
+5. ИЗМЕНЕНИЕ (src/entities/Rectangle.ts)
+   └─ rectangle.setBottomRight(new Point(10, 10))
+   └─ calculateProperties()
+   └─ Area = 100, Perimeter = 40
+   └─ notifyObservers()
+
+6. АВТОМАТИЧЕСКОЕ ОБНОВЛЕНИЕ (Observer)
+   └─ observer.update(rectangle)
+   └─ warehouse.setArea('rect1', 100) ✅ ОБНОВЛЕНО!
+   └─ warehouse.setPerimeter('rect1', 40) ✅ ОБНОВЛЕНО!
+
+7. ПОИСК (src/patterns/Specification.ts)
+   └─ repository.find(new AreaRangeSpecification(50, 1000))
+   └─ AreaRangeSpecification.isSatisfiedBy(rectangle)
+   └─ rectangle.getArea() = 100
+   └─ 100 >= 50 && 100 <= 1000 = TRUE ✅ НАЙДЕН!
+
+8. СОРТИРОВКА (src/patterns/Comparator.ts)
+   └─ repository.sort(new NameComparator())
+   └─ NameComparator.compare(a, b)
+   └─ a.getName().localeCompare(b.getName())
+   └─ Результат: отсортированный массив ✅
+```
+
+---
+
+### ПОЧЕМУ ЭТОТ ДИЗАЙН ПРАВИЛЬНЫЙ?
+
+1. **Repository Pattern** (src/patterns/Repository.ts)
+   - ✅ Инкапсулирует доступ к данным
+   - ✅ Скрывает деталь реализации (Map)
+   - ✅ Предоставляет единый интерфейс (add, remove, find, sort)
+
+2. **Singleton Pattern** (src/patterns/Warehouse.ts)
+   - ✅ Гарантирует только один экземпляр
+   - ✅ Глобальный доступ к характеристикам
+   - ✅ Нет дублирования данных
+
+3. **Observer Pattern** (src/patterns/Observer.ts + WarehouseObserver.ts)
+   - ✅ Автоматическое обновление при изменении
+   - ✅ Слабая связь между Rectangle и Warehouse
+   - ✅ Нет явных вызовов обновления
+   - ✅ Легко добавить новых наблюдателей
+
+4. **Specification Pattern** (src/patterns/Specification.ts)
+   - ✅ Гибкий поиск без многих методов
+   - ✅ Комбинирование критериев (AND, OR, NOT)
+   - ✅ Переиспользуемые спецификации
+
+5. **Comparator Pattern** (src/patterns/Comparator.ts)
+   - ✅ Множественные стратегии сортировки
+   - ✅ Переиспользуемые компараторы
+   - ✅ Легко добавить новые способы сортировки
